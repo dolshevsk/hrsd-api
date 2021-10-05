@@ -3,6 +3,8 @@ services:
   web:
     container_name: hrsd-api
     build: .
+    volumes:
+      - ./app:/src/app
     command: python app/main.py
     ports:
       - "8080:8080"
