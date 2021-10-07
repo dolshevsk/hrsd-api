@@ -17,3 +17,10 @@ class ResponseERROR(Response):
         kwargs["text"] = text
         kwargs["content_type"] = "application/json"
         super().__init__(**kwargs)
+
+
+class Response404(Response):
+    def __init__(self, **kwargs):
+        kwargs["text"] = "404: Not Found"
+        kwargs["status"] = 404
+        super().__init__(**kwargs)

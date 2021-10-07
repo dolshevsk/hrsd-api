@@ -1,57 +1,63 @@
-import asyncio
+from typing import Optional
 
 import asyncpg
-from asyncpg import Pool
+from asyncpg import Pool, Connection
 
-from models import CreateRestaurantResource, Restaurant, Restaurants
-
-
-async def get_conn_poll() -> Pool:
-    attempt = 0
-    while attempt < 5:
-        try:
-            pool = await asyncpg.create_pool(
-                dsn="postgres://postgres:postgres@127.0.0.1:5432/postgres"
-            )
-            return pool
-        except OSError:
-            await asyncio.sleep(2)
-            attempt += 1
-    raise OSError
+from models import RestaurantResource, Restaurant, Restaurants
+from utils import io_attempts
 
 
-async def insert_restaurant(pool: Pool, restaurant: CreateRestaurantResource) -> Restaurant:
+@io_attempts(5)
+async def get_conn(db_name: str) -> Connection:
+    conn = await asyncpg.connect(
+        dsn=f"postgres://postgres:postgres@127.0.0.1:5432/{db_name}"
+    )
+    return conn
+
+
+@io_attempts(5)
+async def get_conn_poll(db_name: str) -> Pool:
+    pool = await asyncpg.create_pool(
+        dsn=f"postgres://postgres:postgres@127.0.0.1:5432/{db_name}"
+    )
+    return pool
+
+
+async def insert_restaurant(pool: Pool, restaurant: RestaurantResource) -> Restaurant:
     row = await pool.fetchrow(
-        "INSERT INTO restaurants (name, description, is_deleted) VALUES ($1, $2, false) RETURNING id, is_deleted, created_at",
+        "INSERT INTO restaurants (name, description) VALUES ($1, $2) RETURNING id, created_at",
         restaurant.name,
         restaurant.description,
     )
     restaurant = Restaurant(**row, **restaurant.dict())
-    print(f"restaurant={restaurant}")
     return restaurant
 
 
+async def set_restaurant(pool: Pool, old_name: str, restaurant: Restaurant) -> bool:
+    result = await pool.execute(
+        "UPDATE restaurants SET name=$1, description=$2 WHERE name ILIKE $3",
+        restaurant.name,
+        restaurant.description,
+        old_name,
+    )
+    return bool(int(result.removeprefix("UPDATE ")))
+
+
 async def fetch_all_restaurants(pool: Pool) -> Restaurants:
-    async with pool.acquire() as conn:
-        rows = await conn.fetch("SELECT * FROM restaurants ORDER BY created_at DESC")
-
+    rows = await pool.fetch("SELECT * FROM restaurants ORDER BY created_at DESC")
     restaurants = Restaurants.parse_obj(rows)
-    # for row in rows:
-    #     restaurants.append(Restaurant(**row))
-
     return restaurants
 
 
-async def fetch_restaurant_by_name(pool: Pool, name: str) -> Restaurant:
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT * FROM restaurants where name = $1", name)
+async def fetch_restaurant_by_name(pool: Pool, name: str) -> Optional[Restaurant]:
+    row = await pool.fetchrow("SELECT * FROM restaurants where name ILIKE $1", name)
+    if not row:
+        return None
+
     restaurant = Restaurant(**row)
     return restaurant
 
 
 async def delete_restaurant_by_name(pool: Pool, name: str) -> bool:
-    async with pool.acquire() as conn:
-        result = await conn.execute("UPDATE restaurants SET is_deleted = true where name = $1", name)
-        print(result)
-
-    return True
+    result = await pool.execute("DELETE FROM restaurants where name ILIKE $1", name)  # response -> "DELETE 1"
+    return bool(int(result.removeprefix("DELETE ")))
