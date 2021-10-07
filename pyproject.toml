@@ -8,6 +8,7 @@ authors = ["dolshevsk <olshevskiydk@gmail.com>"]
 python = "^3.9"
 aiohttp = "^3.7.4"
 asyncpg = "^0.24.0"
+pydantic = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
