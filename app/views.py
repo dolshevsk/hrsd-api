@@ -5,6 +5,7 @@ from aiohttp.web import RouteTableDef, Request, Response
 from db import (
     fetch_all_restaurants,
     fetch_restaurant_by_name,
+    fetch_random_restaurant,
     delete_restaurant_by_name,
     insert_restaurant,
     set_restaurant,
@@ -44,6 +45,14 @@ async def create_restaurant(request: Request) -> Response:
 async def retrieve_restaurant(request: Request) -> Response:
     name = request.match_info["name"]
     restaurant = await fetch_restaurant_by_name(request.app["pool"], name)
+    if not restaurant:
+        return Response404()
+    return ResponseJSON(data=restaurant.dict())
+
+
+@routes.get("/random-restaurant")
+async def random_restaurant(request: Request) -> Response:
+    restaurant = await fetch_random_restaurant(request.app["pool"])
     if not restaurant:
         return Response404()
     return ResponseJSON(data=restaurant.dict())

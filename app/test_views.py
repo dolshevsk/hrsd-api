@@ -14,23 +14,18 @@ async def test_db_pool():
     # get default db conn
     conn = await get_conn("postgres")
     # create test_db
-    print(f"CREATING test_db")
-    resp = await conn.execute(f"DROP DATABASE IF EXISTS test_db")
-    print(resp)
+    await conn.execute(f"DROP DATABASE IF EXISTS test_db")
     await conn.execute("CREATE DATABASE test_db")
-    print(f"test_db WAS CREATED SUCCESSFULLY")
     # get test_db pool of connections
     pool = await get_conn_poll("test_db")
     # run migrations
     await run_migrations(pool)
-    print("MIGRATIONS APPLIED SUCCESSFULLY")
     yield pool
     # close pool of connections
     await pool.close()
     # drop test_db and close conn
     await conn.execute("DROP DATABASE test_db WITH (FORCE)")
     await conn.close()
-    print(f"test_db WAS DROPPED SUCCESSFULLY")
 
 
 @pytest.fixture
@@ -109,6 +104,15 @@ async def test_retrieve_restaurant_404_not_found(client, app):
     assert resp.status == 404
 
 
+async def test_retrieve_restaurant_200_case_intensive(client, app):
+    await insert_restaurant(app["pool"], RestaurantResource(name="Doma", description="shorty"))
+
+    resp = await client.get("/restaurants/DOMA")
+    assert resp.status == 200
+    json = await resp.json()
+    assert bool(json["data"]["id"]) is True
+
+
 async def test_retrieve_restaurant_200_on_success(client, app):
     await insert_restaurant(app["pool"], RestaurantResource(name="Vasilki", description="shorty"))
 
@@ -116,6 +120,21 @@ async def test_retrieve_restaurant_200_on_success(client, app):
     assert resp.status == 200
     json = await resp.json()
     assert bool(json["data"]["id"]) is True
+
+
+async def test_random_restaurant_404_against_empty_db(client, app):
+    resp = await client.get("/random_restaurants")
+    assert resp.status == 404
+
+
+async def test_random_restaurant_200(client, app):
+    await insert_restaurant(app["pool"], RestaurantResource(name="A", description="shorty"))
+    await insert_restaurant(app["pool"], RestaurantResource(name="B", description="shorty"))
+
+    resp = await client.get("/random-restaurant")
+    assert resp.status == 200
+    json = await resp.json()
+    assert type(json["data"]) == dict
 
 
 async def test_update_restaurant_404_not_found(client, app):

@@ -50,7 +50,16 @@ async def fetch_all_restaurants(pool: Pool) -> Restaurants:
 
 
 async def fetch_restaurant_by_name(pool: Pool, name: str) -> Optional[Restaurant]:
-    row = await pool.fetchrow("SELECT * FROM restaurants where name ILIKE $1", name)
+    row = await pool.fetchrow("SELECT * FROM restaurants WHERE name ILIKE $1", name)
+    if not row:
+        return None
+
+    restaurant = Restaurant(**row)
+    return restaurant
+
+
+async def fetch_random_restaurant(pool: Pool) -> Optional[Restaurant]:
+    row = await pool.fetchrow("SELECT * FROM restaurants ORDER BY random()")
     if not row:
         return None
 
