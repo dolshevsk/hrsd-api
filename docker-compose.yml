@@ -3,6 +3,8 @@ services:
   web:
     container_name: hrsd_api
     build: .
+    env_file:
+      - .env
     volumes:
       - ./app:/src/app
     command: bash -c "python app/db_migrator.py && python app/main.py"

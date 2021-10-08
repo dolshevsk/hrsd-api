@@ -1,12 +1,13 @@
-import asyncio
 import logging
+import os
 from os import listdir
 from os.path import dirname, join
 from typing import Union
 
+import asyncio
 from asyncpg import Connection, Pool
 
-from db import get_conn
+from db import get_conn, build_dsn
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -22,7 +23,14 @@ async def run_migrations(conn: Union[Connection, Pool]):
 
 
 async def _main():
-    conn = await get_conn("postgres_db")
+    dsn = build_dsn(
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.environ["POSTGRES_HOST"],
+        port=os.environ["POSTGRES_PORT"],
+        db=os.environ["POSTGRES_DB"],
+    )
+    conn = await get_conn(dsn)
     logger.info("RUNNING MIGRATIONS")
     await run_migrations(conn)
     await asyncio.wait_for(conn.close(), timeout=5)

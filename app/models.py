@@ -1,7 +1,7 @@
 from typing import Union
 from uuid import UUID
 
-from pydantic import BaseModel, validator, Field, parse_obj_as
+from pydantic import BaseModel, validator
 from datetime import datetime
 
 

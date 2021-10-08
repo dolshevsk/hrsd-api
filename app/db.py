@@ -7,19 +7,19 @@ from models import RestaurantResource, Restaurant, Restaurants
 from utils import io_attempts
 
 
+def build_dsn(user: str, password: str, host: str, port: str, db: str):
+    return f"postgres://{user}:{password}@{host}:{port}/{db}"
+
+
 @io_attempts(5)
-async def get_conn(db_name: str) -> Connection:
-    conn = await asyncpg.connect(
-        dsn=f"postgres://postgres:postgres@postgres:5432/{db_name}"
-    )
+async def get_conn(dsn: str) -> Connection:
+    conn = await asyncpg.connect(dsn=dsn)
     return conn
 
 
 @io_attempts(5)
-async def get_conn_poll(db_name: str) -> Pool:
-    pool = await asyncpg.create_pool(
-        dsn=f"postgres://postgres:postgres@postgres:5432/{db_name}"
-    )
+async def get_conn_poll(dsn: str) -> Pool:
+    pool = await asyncpg.create_pool(dsn=dsn)
     return pool
 
 

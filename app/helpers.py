@@ -1,6 +1,6 @@
 import json
 
-from aiohttp.web import Response, json_response
+from aiohttp.web import Response
 
 
 class ResponseJSON(Response):

@@ -1,23 +1,45 @@
+import os
 from datetime import datetime
-import pytest
+
 
 from aiohttp import web
+import pytest
 
 from models import RestaurantResource
-from db import get_conn, get_conn_poll, insert_restaurant
+from db import get_conn, get_conn_poll, insert_restaurant, build_dsn
 from db_migrator import run_migrations
 from views import routes
 
 
-@pytest.fixture()
+def build_dsns() -> tuple[str, str]:
+    dsn = build_dsn(
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.environ["POSTGRES_HOST"],
+        port=os.environ["POSTGRES_PORT"],
+        db=os.environ["POSTGRES_DB"],
+    )
+    test_dsn = build_dsn(
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.environ["POSTGRES_HOST"],
+        port=os.environ["POSTGRES_PORT"],
+        db=os.environ["POSTGRES_TEST_DB"],
+    )
+    return dsn, test_dsn
+
+
+@pytest.fixture
 async def test_db_pool():
+    # get dsns
+    dsn, test_dsn = build_dsns()
     # get default db conn
-    conn = await get_conn("postgres_db")
+    conn = await get_conn(dsn)
     # create test_db
     await conn.execute(f"DROP DATABASE IF EXISTS test_db")
     await conn.execute("CREATE DATABASE test_db")
     # get test_db pool of connections
-    pool = await get_conn_poll("test_db")
+    pool = await get_conn_poll(test_dsn)
     # run migrations
     await run_migrations(pool)
     yield pool

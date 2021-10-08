@@ -1,17 +1,25 @@
 import logging
 import asyncio
+import os
 
 from aiohttp import web
 
 from views import routes
-from db import get_conn_poll
+from db import build_dsn, get_conn_poll
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 async def init_db_pool(app):
-    app["pool"] = await get_conn_poll("postgres_db")
+    dsn = build_dsn(
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
+        host=os.environ["POSTGRES_HOST"],
+        port=os.environ["POSTGRES_PORT"],
+        db=os.environ["POSTGRES_DB"],
+    )
+    app["pool"] = await get_conn_poll(dsn)
     logger.info("POOL WAS CREATED")
     yield
     logger.info("TRYING TO CLOSE POOL")
