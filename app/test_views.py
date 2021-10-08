@@ -145,7 +145,7 @@ async def test_retrieve_restaurant_200_on_success(client, app):
 
 
 async def test_random_restaurant_404_against_empty_db(client, app):
-    resp = await client.get("/random_restaurants")
+    resp = await client.get("/random_restaurant")
     assert resp.status == 404
 
 
