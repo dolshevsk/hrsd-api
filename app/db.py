@@ -10,7 +10,7 @@ from utils import io_attempts
 @io_attempts(5)
 async def get_conn(db_name: str) -> Connection:
     conn = await asyncpg.connect(
-        dsn=f"postgres://postgres:postgres@127.0.0.1:5432/{db_name}"
+        dsn=f"postgres://postgres:postgres@postgres:5432/{db_name}"
     )
     return conn
 
@@ -18,7 +18,7 @@ async def get_conn(db_name: str) -> Connection:
 @io_attempts(5)
 async def get_conn_poll(db_name: str) -> Pool:
     pool = await asyncpg.create_pool(
-        dsn=f"postgres://postgres:postgres@127.0.0.1:5432/{db_name}"
+        dsn=f"postgres://postgres:postgres@postgres:5432/{db_name}"
     )
     return pool
 

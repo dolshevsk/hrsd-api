@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def init_db_pool(app):
-    app["pool"] = await get_conn_poll("postgres")
+    app["pool"] = await get_conn_poll("postgres_db")
     logger.info("POOL WAS CREATED")
     yield
     logger.info("TRYING TO CLOSE POOL")

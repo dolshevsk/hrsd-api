@@ -12,7 +12,7 @@ from views import routes
 @pytest.fixture()
 async def test_db_pool():
     # get default db conn
-    conn = await get_conn("postgres")
+    conn = await get_conn("postgres_db")
     # create test_db
     await conn.execute(f"DROP DATABASE IF EXISTS test_db")
     await conn.execute("CREATE DATABASE test_db")

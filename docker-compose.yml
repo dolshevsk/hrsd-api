@@ -5,7 +5,7 @@ services:
     build: .
     volumes:
       - ./app:/src/app
-    command: python app/main.py
+    command: bash -c "python app/db_migrator.py && python app/main.py"
     ports:
       - "8080:8080"
     depends_on:
